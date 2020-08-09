@@ -1,4 +1,4 @@
-use crate::document::Cursor;
+use crate::cursor::Cursor;
 use serde::Serialize;
 use sha2::{Digest, Sha512Trunc256};
 
@@ -54,6 +54,14 @@ impl Node {
             parent: Some(cursor.node_id.clone()),
         }
     }
+    pub fn delete(cursor: &Cursor) -> Self {
+        Node {
+            action: Action::Delete {
+                offset: cursor.offset,
+            },
+            parent: Some(cursor.node_id.clone()),
+        }
+    }
     pub fn parent(&self) -> Option<&NodeId> {
         self.parent.as_ref()
     }
@@ -92,7 +100,7 @@ impl Node {
             crate::node::Action::Null => println!("{}: root", self.node_id().hex4()),
             crate::node::Action::Insert { offset, body } => {
                 println!(
-                    "{}: insert_str({}, {}) ({})",
+                    "{}: insert({}, {}) ({})",
                     self.node_id().hex4(),
                     offset,
                     body,
@@ -100,7 +108,15 @@ impl Node {
                 );
                 buf.insert_str(0, &body);
             }
-            crate::node::Action::Delete { offset: _ } => {}
+            crate::node::Action::Delete { offset } => {
+                println!(
+                    "{}: delete({}) ({})",
+                    self.node_id().hex4(),
+                    offset,
+                    self.parent_hex4()
+                );
+                buf.remove(*offset as usize);
+            }
         }
     }
 }

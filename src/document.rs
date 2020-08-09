@@ -1,3 +1,4 @@
+use crate::cursor::Cursor;
 use crate::node::{Node, NodeId};
 use std::collections::BTreeMap;
 
@@ -15,17 +16,6 @@ struct NodeUnit {
 impl NodeUnit {
     fn calculated_offset(&self) -> u32 {
         self.calculated_parent_offset + self.node.offset()
-    }
-}
-
-pub struct Cursor {
-    pub node_id: NodeId,
-    pub offset: u32,
-}
-
-impl Cursor {
-    pub fn new(node_id: NodeId, offset: u32) -> Cursor {
-        Cursor { node_id, offset }
     }
 }
 
@@ -57,6 +47,44 @@ impl Document {
         self.add_node(node);
     }
 
+    pub fn delete(&mut self) {
+        let node = Node::delete(&self.cursor);
+
+        let mut cursor = self.cursor.clone();
+        cursor.back(self);
+        self.cursor = cursor;
+
+        self.add_node(node);
+    }
+
+    pub fn get_node(&self, node_id: &NodeId) -> &Node {
+        &self.nodes.get(node_id).expect("Node not found").node
+    }
+
+    pub fn traverse_left(
+        &self,
+        mut node_id: NodeId,
+        mut positions: u32,
+        try_avoid_zero: bool,
+    ) -> (NodeId, u32) {
+        while positions > 0 {
+            let nu = self.nodes.get(&node_id).expect("Node not found");
+            match &nu.node.parent {
+                Some(parent) => {
+                    let offset = nu.node.offset();
+                    if (!try_avoid_zero && positions >= offset) || (positions > offset) {
+                        return (node_id.clone(), offset - positions);
+                    } else {
+                        positions -= offset;
+                        node_id = parent.clone();
+                        // Keeep goinggg
+                    }
+                }
+                None => return (node_id.clone(), 0),
+            }
+        }
+        return (node_id.clone(), 0);
+    }
     fn add_node(&mut self, node: Node) {
         let node_id = node.node_id();
 
