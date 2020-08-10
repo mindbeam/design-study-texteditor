@@ -5,7 +5,6 @@ use std::collections::BTreeMap;
 pub struct Document {
     nodes: BTreeMap<NodeId, NodeUnit>,
     root: NodeId,
-    cursor: Cursor,
 }
 
 struct NodeUnit {
@@ -23,7 +22,6 @@ impl Document {
     pub fn new() -> Document {
         let root = Node::root();
         let node_id = root.node_id();
-        let cursor = Cursor::new(node_id.clone(), 0);
 
         let mut nodes: BTreeMap<NodeId, NodeUnit> = BTreeMap::new();
         let unit = NodeUnit {
@@ -33,28 +31,12 @@ impl Document {
 
         nodes.insert(node_id.clone(), unit);
         Document {
-            cursor,
             root: node_id,
             nodes,
         }
     }
-    pub fn insert(&mut self, body: String) {
-        let offset = body.len() as u32;
-        let node = Node::insert(&self.cursor, body);
-
-        self.cursor = Cursor::new(node.node_id(), offset);
-
-        self.add_node(node);
-    }
-
-    pub fn delete(&mut self) {
-        let node = Node::delete(&self.cursor);
-
-        let mut cursor = self.cursor.clone();
-        cursor.back(self);
-        self.cursor = cursor;
-
-        self.add_node(node);
+    pub fn root_node(&self) -> NodeId {
+        self.root.clone()
     }
 
     pub fn get_node(&self, node_id: &NodeId) -> &Node {
@@ -85,7 +67,7 @@ impl Document {
         }
         return (node_id.clone(), 0);
     }
-    fn add_node(&mut self, node: Node) {
+    pub fn add_node(&mut self, node: Node) {
         let node_id = node.node_id();
 
         // Look up the parent for this node and get it's calculated offset
@@ -105,14 +87,16 @@ impl Document {
 
         self.nodes.insert(node_id, unit);
     }
-    pub fn render(&self) -> String {
+    pub fn render(&self, cursor: &Cursor) -> String {
         // TODO - make nodes BTreeMap<NodeId,Vec<NodeUnit>>
         // NO! Do it from child to parent after all
         // this will allow scrolling to render a partial document. start with the cursor
 
         let mut buf = String::new();
 
-        let Cursor { node_id, offset } = &self.cursor;
+        let Cursor {
+            node_id, offset, ..
+        } = cursor;
 
         let mut hopper = Vec::new();
         hopper.push(node_id.clone());

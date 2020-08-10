@@ -1,11 +1,12 @@
 TODOs:
 
 - X leftward cursor traversal
+- rendering with non-leaf cursor positioning (currently ascending only, not descending)
+- rightward cursor traversal
 - rendered deletion
 - rendered insert bifurcation
 - cursor indication
 - arrow cursor moving (relative)
-- rendering with non-leaf cursor positioning (currently ascending only, not descending)
 - Scrolling and positioning
 - Loading flatfiles
 - Concurrency
