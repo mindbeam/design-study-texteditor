@@ -26,5 +26,40 @@ fn main() {
     cursor.left(1);
     cursor.insert("m".to_string());
 
+    cursor.left(9);
     println!(": {}", document.lock().unwrap().render(&cursor));
+
+    // PAUSE - you're processing this in the wrong fucking order. should be LABM not LAMB
+    // figure out the clock, then outward/inward rendered offsettting, and idempotence
+}
+
+#[cfg(test)]
+mod test {
+
+    use crate::{cursor::Cursor, document::Document};
+    use std::sync::{Arc, Mutex};
+
+    #[test]
+    fn traversal1() {
+        let document = Arc::new(Mutex::new(Document::new()));
+        let mut cursor = Cursor::new(document.clone(), document.lock().unwrap().root_node(), 0);
+
+        // (A) -> (BX) -> (delete X)
+        //          \---> (C)
+        cursor.insert("A".to_string());
+        cursor.insert("BX".to_string());
+        cursor.delete();
+        cursor.insert("C".to_string());
+
+        let d = document.lock().unwrap();
+        assert_eq!(
+            d.diag(),
+            "ⓧ (cf30=NULL), cf30↜(b50d=A@0), b50d↜(3f9d=BX@1), 3f9d↜(c799=␡ @2), b50d↜(dcd0=C@0)"
+        );
+
+        // seems to be busylooping
+        cursor.left(2);
+
+        println!(": {}", document.lock().unwrap().render(&cursor));
+    }
 }

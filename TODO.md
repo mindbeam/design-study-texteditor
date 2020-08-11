@@ -2,12 +2,17 @@ TODOs:
 
 - X leftward cursor traversal
 - rendering with non-leaf cursor positioning (currently ascending only, not descending)
+- peer node Ordering
+- document TreeView
 - rightward cursor traversal
+- Move basic storage/traversal guts to a storage class, and make document and entity type
+- Make DocumentCursor an entity type as well
 - rendered deletion
 - rendered insert bifurcation
 - cursor indication
 - arrow cursor moving (relative)
 - Scrolling and positioning
+- Modularize projection (create basic SET entity type as a test pilot?)
 - Loading flatfiles
 - Concurrency
 - Saving and loading trees

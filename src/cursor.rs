@@ -19,7 +19,7 @@ impl Cursor {
             offset,
         }
     }
-    fn doc(&self) -> std::sync::MutexGuard<Document> {
+    pub fn doc(&self) -> std::sync::MutexGuard<Document> {
         self.document.lock().unwrap()
     }
     pub fn insert(&mut self, body: String) {

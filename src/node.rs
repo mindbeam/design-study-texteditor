@@ -1,4 +1,4 @@
-use crate::cursor::Cursor;
+use crate::{cursor::Cursor, document::Document};
 use serde::Serialize;
 use sha2::{Digest, Sha512Trunc256};
 
@@ -15,10 +15,12 @@ pub enum Action {
     },
 }
 
-#[derive(Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct NodeId(pub [u8; 32]);
 
+#[derive(Debug)]
 pub struct Node {
+    pub tick: u32,
     pub parent: Option<NodeId>,
     pub action: Action,
 }
@@ -33,20 +35,25 @@ static NULL: &'static [u8; 32] = &[0; 32];
 
 impl Node {
     #[allow(unused)]
-    pub fn new(parent: Option<NodeId>, action: Action) -> Self {
+    pub fn new(tick: u32, parent: Option<NodeId>, action: Action) -> Self {
         Node {
+            tick,
             action,
             parent: parent,
         }
     }
-    pub fn root() -> Node {
+    pub fn root(tick: u32) -> Node {
         Node {
+            tick,
             parent: None,
             action: Action::Null,
         }
     }
     pub fn insert(cursor: &Cursor, body: String) -> Self {
+        let tick = cursor.doc().increment_clock();
+
         Node {
+            tick,
             action: Action::Insert {
                 offset: cursor.offset,
                 body,
@@ -55,7 +62,10 @@ impl Node {
         }
     }
     pub fn delete(cursor: &Cursor) -> Self {
+        let tick = cursor.doc().increment_clock();
+
         Node {
+            tick,
             action: Action::Delete {
                 offset: cursor.offset,
             },
@@ -70,6 +80,14 @@ impl Node {
             p.hex4()
         } else {
             "NA".to_string()
+        }
+    }
+    pub fn diag(&self) -> String {
+        use crate::node::Action::*;
+        match &self.action {
+            Null => "NULL".to_string(),
+            Action::Insert { offset, body } => format!("{}@{}", body, offset),
+            Action::Delete { offset } => format!("␡ @{}", offset),
         }
     }
     pub fn offset(&self) -> u32 {
@@ -95,18 +113,19 @@ impl Node {
 
         NodeId(result)
     }
-    pub fn materialize(&self, buf: &mut String) {
+    pub fn materialize(&self, buf: &mut String, render_offset: u32) {
         match &self.action {
             crate::node::Action::Null => println!("{}: root", self.node_id().hex4()),
             crate::node::Action::Insert { offset, body } => {
                 println!(
-                    "{}: insert({}, {}) ({})",
+                    "{}: insert({}, {}, {}) ({})",
                     self.node_id().hex4(),
+                    render_offset,
                     offset,
                     body,
                     self.parent_hex4()
                 );
-                buf.insert_str(0, &body);
+                buf.insert_str(render_offset as usize, &body);
             }
             crate::node::Action::Delete { offset } => {
                 println!(
@@ -127,8 +146,9 @@ mod test {
 
     #[test]
     fn test1() {
-        let node0 = Node::root();
+        let node0 = Node::root(0);
         let node1 = Node::new(
+            1,
             Some(node0.node_id()),
             Action::Insert {
                 offset: 0,
@@ -137,6 +157,7 @@ mod test {
         );
 
         let node2 = Node::new(
+            2,
             Some(node1.node_id()),
             Action::Insert {
                 offset: 0,
@@ -147,7 +168,7 @@ mod test {
         let foo: &[u8; 32] = &(node2.node_id().0);
         assert_eq!(
             hex::encode(foo),
-            "9d747eaf196585e24f421fc98ae818f77423a5d24d15cd5e869e43f2c25ee8d9"
+            "13986206b4221b6393ebd5d00de92678db2f9c5b74d44427ecbc37e2063090ae"
         )
     }
 }
