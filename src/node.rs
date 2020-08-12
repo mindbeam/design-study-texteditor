@@ -2,7 +2,7 @@ use crate::{cursor::Cursor, document::Document};
 use serde::Serialize;
 use sha2::{Digest, Sha512Trunc256};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub enum Action {
     Null,
     Insert {
@@ -18,7 +18,7 @@ pub enum Action {
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct NodeId(pub [u8; 32]);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Node {
     pub tick: u32,
     pub parent: Option<NodeId>,
@@ -86,8 +86,8 @@ impl Node {
         use crate::node::Action::*;
         match &self.action {
             Null => "NULL".to_string(),
-            Action::Insert { offset, body } => format!("{}@{}", body, offset),
-            Action::Delete { offset } => format!("␡ @{}", offset),
+            Action::Insert { offset, body } => format!("{} @ {}", body, offset),
+            Action::Delete { offset } => format!("␡ @ {}", offset),
         }
     }
     pub fn offset(&self) -> u32 {

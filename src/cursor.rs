@@ -41,7 +41,21 @@ impl Cursor {
         self.left(1);
     }
 
-    pub fn left(&mut self, positions: u32) {
+    pub fn left(&mut self, mut positions: u32) {
+        // the cursor has an offset to it's referenced node
+        // that node has an offset to its parent
+
+        // first, lets see if we can do this without changing nodes
+        if positions < self.offset {
+            // We don't want to go to zero
+            self.offset - positions;
+            return;
+        }
+
+        // So we have to change nodes. Adjust the number of positions
+        // to reflect a zero offset to the referenced node
+        positions -= self.offset;
+
         let updated = self
             .doc()
             .traverse_left(self.node_id.clone(), positions, true);

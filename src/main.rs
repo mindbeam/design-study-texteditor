@@ -50,16 +50,17 @@ mod test {
         cursor.insert("BX".to_string());
         cursor.delete();
         cursor.insert("C".to_string());
-
-        let d = document.lock().unwrap();
         assert_eq!(
-            d.diag(),
-            "ⓧ (cf30=NULL), cf30↜(b50d=A@0), b50d↜(3f9d=BX@1), 3f9d↜(c799=␡ @2), b50d↜(dcd0=C@0)"
+            cursor.doc().diag(),
+            "ⓧ (cf30=NULL), cf30↜(b50d=A @ 0), b50d↜(3f9d=BX @ 1), 3f9d↜(c799=␡ @ 2), b50d↜(dcd0=C @ 0)"
         );
 
-        // seems to be busylooping
-        cursor.left(2);
+        println!("{}", cursor.doc().diag_tree(Some(&cursor)));
 
-        println!(": {}", document.lock().unwrap().render(&cursor));
+        // seems to be busylooping
+        cursor.left(1);
+
+        println!("{}", cursor.doc().diag_tree(Some(&cursor)));
+        // println!(": {}", document.lock().unwrap().render(&cursor));
     }
 }

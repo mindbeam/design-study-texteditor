@@ -1,6 +1,6 @@
 use crate::cursor::Cursor;
 use crate::node::{Node, NodeId};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 
 pub struct Document {
     nodes: BTreeMap<NodeId, Node>,
@@ -38,18 +38,20 @@ impl Document {
         reading
     }
 
+    /// Traverse left a given number of positions from the zero offset of a given node
     pub fn traverse_left(
         &self,
         mut node_id: NodeId,
         mut positions: u32,
         try_avoid_zero: bool,
     ) -> (NodeId, u32) {
+        //
         while positions > 0 {
             let node = self.nodes.get(&node_id).expect("Node not found");
             match &node.parent {
                 Some(parent) => {
                     let offset = node.offset();
-                    if !try_avoid_zero && positions <= offset {
+                    if !try_avoid_zero && offset > positions {
                         return (node_id.clone(), offset - positions);
                     } else {
                         positions -= offset;
@@ -172,6 +174,66 @@ impl Document {
                 None => write!(out, "ⓧ ({}={})", node_id.hex4(), node.diag()).unwrap(),
             }
         }
+        out
+    }
+
+    #[allow(unused)]
+    pub fn diag_tree(&self, cursor: Option<&Cursor>) -> String {
+        let mut out = String::new();
+        use std::fmt::Write;
+
+        struct Hop {
+            node_id: NodeId,
+            node: Node,
+            tier: usize,
+        }
+
+        let mut hopper: Vec<Hop> = Vec::new();
+
+        let node = self.nodes.get(&self.root).expect("Node not found");
+
+        hopper.push(Hop {
+            node_id: self.root.clone(),
+            node: node.clone(),
+            tier: 0,
+        });
+
+        while let Some(hop) = hopper.pop() {
+            if hop.tier > 0 {
+                for _ in std::iter::repeat("\t").take(hop.tier - 1) {
+                    write!(out, "      ").unwrap();
+                }
+                write!(out, "    \\-");
+            }
+            write!(out, "{}: {}\n", hop.node_id.hex4(), hop.node.diag(),).unwrap();
+            if let Some(cursor) = cursor {
+                if cursor.node_id == hop.node_id {
+                    for _ in std::iter::repeat("\t").take(hop.tier - 1) {
+                        write!(out, "      ").unwrap();
+                    }
+                    write!(out, "      ^ CURSOR @ {}\n", cursor.offset);
+                }
+            }
+
+            let mut subhopper = Vec::new();
+            if let Some(children) = self.child_map.get(&hop.node_id) {
+                for child_id in children {
+                    let child = self.nodes.get(&child_id).expect("Node not found");
+
+                    subhopper.push(Hop {
+                        node_id: child_id.clone(),
+                        node: child.clone(),
+                        tier: hop.tier + 1,
+                    })
+                }
+            }
+
+            // Reverse sort because we're conusming the tail *facepalm*
+            subhopper.sort_by(|a, b| b.node.tick.cmp(&a.node.tick));
+
+            hopper.extend(subhopper);
+        }
+
         out
     }
 }
