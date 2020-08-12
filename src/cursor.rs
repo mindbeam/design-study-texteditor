@@ -41,14 +41,15 @@ impl Cursor {
         self.left(1);
     }
 
+    /// Move the cursor N positions to the left within the document
+    /// Note that the cursor itself may have an offset to the referenced node
+    /// Which is conceptually similar to the cursor itself being like a node
+    // referencing a parent node
     pub fn left(&mut self, mut positions: u32) {
-        // the cursor has an offset to it's referenced node
-        // that node has an offset to its parent
-
         // first, lets see if we can do this without changing nodes
         if positions < self.offset {
             // We don't want to go to zero
-            self.offset - positions;
+            self.offset -= positions;
             return;
         }
 
@@ -61,5 +62,79 @@ impl Cursor {
             .traverse_left(self.node_id.clone(), positions, true);
         self.node_id = updated.0;
         self.offset = updated.1;
+    }
+
+    // Project a number of characters before and after
+    pub fn project_region(&self, chars_before_and_after: u32) -> String {
+        // TODO - make nodes BTreeMap<NodeId,Vec<NodeUnit>>
+        // NO! Do it from child to parent after all
+        // this will allow scrolling to render a partial document. start with the cursor
+
+        let mut buf = String::new();
+
+        struct Hop {
+            node_id: NodeId,
+            node: Node,
+            render_offset: u32,
+        }
+
+        let mut hopper: Vec<Hop> = Vec::new();
+
+        let mut left = self.clone();
+        left.left(chars_before_and_after);
+
+        let doc = self.doc();
+        let node = doc
+            .nodes
+            .get(&left.node_id)
+            .expect("Node not found")
+            .clone();
+
+        hopper.push(Hop {
+            node_id: left.node_id.clone(),
+            node,
+            render_offset: 0,
+        });
+
+        fn raise(hopper: &mut Vec<Hop>, gt: u32, add: u32) {
+            for hop in hopper.iter_mut() {
+                use std::cmp::Ordering::*;
+                match hop.render_offset.cmp(&gt) {
+                    Less => {}
+                    Equal | Greater => {
+                        hop.render_offset += add;
+                    }
+                }
+            }
+        };
+
+        while let Some(hop) = hopper.pop() {
+            let node = doc.nodes.get(&hop.node_id).expect("Node not found");
+
+            node.materialize(&mut buf, hop.render_offset);
+
+            let mut subhopper = Vec::new();
+            if let Some(children) = doc.child_map.get(&hop.node_id) {
+                for child_id in children {
+                    let child = doc.nodes.get(&child_id).expect("Node not found").clone();
+
+                    let render_offset = hop.render_offset + child.offset();
+                    raise(&mut hopper, render_offset, child.offset());
+
+                    subhopper.push(Hop {
+                        node_id: child_id.clone(),
+                        node: child,
+                        render_offset,
+                    })
+                }
+            }
+
+            // Reverse sort because we're conusming the tail *facepalm*
+            subhopper.sort_by(|a, b| b.node.tick.cmp(&a.node.tick));
+
+            hopper.extend(subhopper);
+        }
+
+        buf
     }
 }

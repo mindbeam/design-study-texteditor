@@ -1,10 +1,11 @@
 TODOs:
 
 - X leftward cursor traversal
-- rendering with non-leaf cursor positioning (currently ascending only, not descending)
-- peer node Ordering
-- document TreeView
-- rightward cursor traversal
+- X leftward pre-traversal regional projection
+- X Basic node Ordering
+- X document TreeView
+- regional traversal by line
+- left-right on-demand regional traversal
 - Move basic storage/traversal guts to a storage class, and make document and entity type
 - Make DocumentCursor an entity type as well
 - rendered deletion

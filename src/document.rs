@@ -3,8 +3,8 @@ use crate::node::{Node, NodeId};
 use std::collections::{BTreeMap, VecDeque};
 
 pub struct Document {
-    nodes: BTreeMap<NodeId, Node>,
-    child_map: BTreeMap<NodeId, Vec<NodeId>>,
+    pub nodes: BTreeMap<NodeId, Node>,
+    pub child_map: BTreeMap<NodeId, Vec<NodeId>>,
     clock: u32,
     root: NodeId,
 }
@@ -46,17 +46,27 @@ impl Document {
         try_avoid_zero: bool,
     ) -> (NodeId, u32) {
         //
-        while positions > 0 {
+        loop {
             let node = self.nodes.get(&node_id).expect("Node not found");
             match &node.parent {
-                Some(parent) => {
+                Some(parent_id) => {
                     let offset = node.offset();
-                    if !try_avoid_zero && offset > positions {
-                        return (node_id.clone(), offset - positions);
+
+                    if try_avoid_zero && (offset > positions) || offset >= positions {
+                        // This node has a parent offset which is greater than the
+                        // number of positions we're being asked to traverse left
+                        // Return this node, and the adjusted parent offset
+                        return (parent_id.clone(), offset - positions);
                     } else {
+                        // if we got here, then this node did not have a sufficient parent
+                        // offset to deduct the requested positions, OR it got to zero,
+                        // but we're avoiding selecting offset zero to any node.
+                        // We know offset is NOT > positions, but MAY or may not be equal
+                        // the the above
                         positions -= offset;
-                        node_id = parent.clone();
-                        // Keeep goinggg
+                        node_id = parent_id.clone();
+
+                        continue;
                     }
                 }
                 None => return (node_id.clone(), 0),
@@ -91,63 +101,6 @@ impl Document {
         };
 
         self.nodes.insert(node_id, node);
-    }
-    pub fn render(&self, cursor: &Cursor) -> String {
-        // TODO - make nodes BTreeMap<NodeId,Vec<NodeUnit>>
-        // NO! Do it from child to parent after all
-        // this will allow scrolling to render a partial document. start with the cursor
-
-        let mut buf = String::new();
-
-        let Cursor {
-            node_id, offset, ..
-        } = cursor;
-
-        struct Hop {
-            node_id: NodeId,
-            render_offset: u32,
-        }
-
-        let mut hopper: Vec<Hop> = Vec::new();
-        hopper.push(Hop {
-            node_id: node_id.clone(),
-            render_offset: 0,
-        });
-
-        fn raise(hopper: &mut Vec<Hop>, gt: u32, add: u32) {
-            for hop in hopper.iter_mut() {
-                use std::cmp::Ordering::*;
-                match hop.render_offset.cmp(&gt) {
-                    Less => {}
-                    Equal | Greater => {
-                        hop.render_offset += add;
-                    }
-                }
-            }
-        };
-
-        while let Some(hop) = hopper.pop() {
-            let node = self.nodes.get(&hop.node_id).expect("Node not found");
-            // if let Some(parent) = &nu.node.parent {
-            //     hopper.push(Inward(parent.clone()));
-            // }
-            node.materialize(&mut buf, hop.render_offset);
-            if let Some(children) = self.child_map.get(&hop.node_id) {
-                for child_id in children {
-                    let child = self.nodes.get(&child_id).expect("Node not found");
-
-                    let render_offset = hop.render_offset + child.offset();
-                    raise(&mut hopper, render_offset, child.offset());
-
-                    hopper.push(Hop {
-                        node_id: child_id.clone(),
-                        render_offset,
-                    })
-                }
-            }
-        }
-
-        buf
     }
     #[allow(unused)]
     pub fn diag(&self) -> String {
@@ -208,10 +161,10 @@ impl Document {
             write!(out, "{}: {}\n", hop.node_id.hex4(), hop.node.diag(),).unwrap();
             if let Some(cursor) = cursor {
                 if cursor.node_id == hop.node_id {
-                    for _ in std::iter::repeat("\t").take(hop.tier - 1) {
+                    for _ in std::iter::repeat("\t").take(hop.tier) {
                         write!(out, "      ").unwrap();
                     }
-                    write!(out, "      ^ CURSOR @ {}\n", cursor.offset);
+                    write!(out, "    ^ CURSOR @ {}\n", cursor.offset);
                 }
             }
 
