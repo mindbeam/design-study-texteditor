@@ -4,12 +4,12 @@ TODOs:
 - X leftward pre-traversal regional projection
 - X Basic node Ordering
 - X document TreeView
+- data persistence (sled)
 - regional traversal by line
 - left-right on-demand regional traversal
 - Move basic storage/traversal guts to a storage class, and make document and entity type
 - Make DocumentCursor an entity type as well
-- rendered deletion
-- rendered insert bifurcation
+- X rendered deletion
 - cursor indication
 - arrow cursor moving (relative)
 - Scrolling and positioning

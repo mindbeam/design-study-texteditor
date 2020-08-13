@@ -113,28 +113,35 @@ impl Node {
 
         NodeId(result)
     }
-    pub fn materialize(&self, buf: &mut String, render_offset: u32) {
+    pub fn project(&self, buf: &mut String, render_offset: u32) {
         match &self.action {
-            crate::node::Action::Null => println!("{}: root", self.node_id().hex4()),
+            crate::node::Action::Null => {
+                //println!("{}: root", self.node_id().hex4())
+            }
             crate::node::Action::Insert { offset, body } => {
-                println!(
-                    "{}: insert({}, {}, {}) ({})",
-                    self.node_id().hex4(),
-                    render_offset,
-                    offset,
-                    body,
-                    self.parent_hex4()
-                );
+                // println!(
+                //     "{}: insert({}~>{}, {}) ({})",
+                //     self.node_id().hex4(),
+                //     offset,
+                //     render_offset,
+                //     body,
+                //     self.parent_hex4()
+                // );
                 buf.insert_str(render_offset as usize, &body);
             }
             crate::node::Action::Delete { offset } => {
-                println!(
-                    "{}: delete({}) ({})",
-                    self.node_id().hex4(),
-                    offset,
-                    self.parent_hex4()
-                );
-                buf.remove(*offset as usize);
+                // println!(
+                //     "{}: delete({}~>{}) ({})",
+                //     self.node_id().hex4(),
+                //     offset,
+                //     render_offset,
+                //     self.parent_hex4()
+                // );
+                if buf.len() == render_offset as usize {
+                    buf.pop();
+                } else {
+                    buf.remove(render_offset as usize);
+                }
             }
         }
     }

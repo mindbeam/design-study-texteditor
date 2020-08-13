@@ -96,22 +96,10 @@ impl Cursor {
             render_offset: 0,
         });
 
-        fn raise(hopper: &mut Vec<Hop>, gt: u32, add: u32) {
-            for hop in hopper.iter_mut() {
-                use std::cmp::Ordering::*;
-                match hop.render_offset.cmp(&gt) {
-                    Less => {}
-                    Equal | Greater => {
-                        hop.render_offset += add;
-                    }
-                }
-            }
-        };
-
         while let Some(hop) = hopper.pop() {
             let node = doc.nodes.get(&hop.node_id).expect("Node not found");
 
-            node.materialize(&mut buf, hop.render_offset);
+            node.project(&mut buf, hop.render_offset);
 
             let mut subhopper = Vec::new();
             if let Some(children) = doc.child_map.get(&hop.node_id) {
@@ -119,7 +107,6 @@ impl Cursor {
                     let child = doc.nodes.get(&child_id).expect("Node not found").clone();
 
                     let render_offset = hop.render_offset + child.offset();
-                    raise(&mut hopper, render_offset, child.offset());
 
                     subhopper.push(Hop {
                         node_id: child_id.clone(),
