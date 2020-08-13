@@ -1,8 +1,9 @@
-use io::stdout;
 use keystroke_crdt_experiment::cursor::Cursor;
 use keystroke_crdt_experiment::document::Document;
-use std::io::{self, Read};
+use std::io::{self, stdout};
 use std::sync::{Arc, Mutex};
+use termion::event::Key;
+use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 
 fn main() {
@@ -10,15 +11,20 @@ fn main() {
     let document = Arc::new(Mutex::new(Document::new()));
     let mut cursor = Cursor::new(document.clone(), document.lock().unwrap().root_node(), 0);
 
-    for b in io::stdin().bytes() {
-        let c = b.unwrap() as char;
-        // println!("{}", c);
-        match c {
-            '\x08' => {
-                cursor.delete();
+    for key in io::stdin().keys() {
+        let key = key.unwrap();
+        match key {
+            Key::Ctrl('q') | Key::Ctrl('c') => break,
+            Key::Backspace => cursor.delete(),
+            Key::Char(c) => {
+                if c.is_control() {
+                    // println!("{:?}\r", c as u8);
+                } else {
+                    // println!("{:?} ({})\r", c as u8, c);
+                    cursor.insert(c.to_string());
+                };
             }
-            'q' => break,
-            _ => cursor.insert(c.to_string()),
+            _ => {}
         }
 
         print!("{}\r\n", cursor.project_region(100));
