@@ -158,7 +158,14 @@ impl Document {
                 }
                 write!(out, "    \\-");
             }
-            write!(out, "{}: {}\n", hop.node_id.hex4(), hop.node.diag(),).unwrap();
+            write!(
+                out,
+                "{}: {} [{}]\n",
+                hop.node_id.hex4(),
+                hop.node.diag(),
+                hop.node.tick
+            )
+            .unwrap();
             if let Some(cursor) = cursor {
                 if cursor.node_id == hop.node_id {
                     for _ in std::iter::repeat("\t").take(hop.tier) {

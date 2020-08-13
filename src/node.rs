@@ -105,7 +105,7 @@ impl Node {
         } else {
             hasher.update(NULL);
         }
-
+        serde_json::to_writer(&mut hasher, &self.tick);
         serde_json::to_writer(&mut hasher, &self.action);
 
         // read hash digest and consume hasher
@@ -120,10 +120,11 @@ impl Node {
             }
             crate::node::Action::Insert { offset, body } => {
                 // println!(
-                //     "{}: insert({}~>{}, {}) ({})",
+                //     "{}: insert({}~>{} of {}, {}) ({})",
                 //     self.node_id().hex4(),
                 //     offset,
                 //     render_offset,
+                //     buf.len(),
                 //     body,
                 //     self.parent_hex4()
                 // );
@@ -175,7 +176,7 @@ mod test {
         let foo: &[u8; 32] = &(node2.node_id().0);
         assert_eq!(
             hex::encode(foo),
-            "13986206b4221b6393ebd5d00de92678db2f9c5b74d44427ecbc37e2063090ae"
+            "37dbcb6c5f48e99e4530ab2b4b76731abacdca9a3e93dba49690cdbbd69d90b1"
         )
     }
 }
