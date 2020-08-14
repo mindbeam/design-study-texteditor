@@ -128,6 +128,8 @@ impl Node {
                 //     body,
                 //     self.parent_hex4()
                 // );
+
+                // TODO calculate render offset here
                 buf.insert_str(render_offset as usize, &body);
             }
             crate::node::Action::Delete { offset } => {

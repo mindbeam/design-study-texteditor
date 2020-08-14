@@ -4,8 +4,8 @@ use std::sync::{Arc, Mutex};
 /// Each child node should be unique based on parent, clock, and content
 #[test]
 fn repeated_child_node() {
-    let document = Arc::new(Mutex::new(Document::new()));
-    let mut cursor = Cursor::new(document.clone(), document.lock().unwrap().root_node(), 0);
+    let document = Document::new();
+    let mut cursor = Cursor::root(&document);
 
     cursor.insert("a".to_string());
     let first_a = cursor.node_id.clone();
@@ -27,8 +27,8 @@ fn repeated_child_node() {
 
 #[test]
 fn marpy() {
-    let document = Arc::new(Mutex::new(Document::new()));
-    let mut cursor = Cursor::new(document.clone(), document.lock().unwrap().root_node(), 0);
+    let document = Document::new();
+    let mut cursor = Cursor::root(&document);
 
     for k in "Marp\x08y hab\x08d a liffle\x08\x08\x08\x08ttle lab".chars() {
         match k {

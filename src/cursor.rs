@@ -1,26 +1,25 @@
 use crate::{
-    document::Document,
+    document::{Document, DocumentInner},
     node::{Node, NodeId},
 };
-use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct Cursor {
-    pub document: Arc<Mutex<Document>>,
+    pub document: Document,
     pub node_id: NodeId,
     pub offset: u32,
 }
 
 impl Cursor {
-    pub fn new(document: Arc<Mutex<Document>>, node_id: NodeId, offset: u32) -> Cursor {
+    pub fn root(document: &Document) -> Cursor {
         Cursor {
-            document,
-            node_id,
-            offset,
+            document: document.clone(),
+            node_id: document.inner().root_node(),
+            offset: 0,
         }
     }
-    pub fn doc(&self) -> std::sync::MutexGuard<Document> {
-        self.document.lock().unwrap()
+    pub fn doc(&self) -> std::sync::MutexGuard<DocumentInner> {
+        self.document.inner()
     }
     pub fn insert(&mut self, body: String) {
         let offset = body.len() as u32;

@@ -6,12 +6,11 @@ pub mod node;
 mod test {
 
     use crate::{cursor::Cursor, document::Document};
-    use std::sync::{Arc, Mutex};
 
     #[test]
     fn basic_deletion_and_regional_projection() {
-        let document = Arc::new(Mutex::new(Document::new()));
-        let mut cursor = Cursor::new(document.clone(), document.lock().unwrap().root_node(), 0);
+        let document = Document::new();
+        let mut cursor = Cursor::root(&document);
 
         // (A) -> (BX) -> (delete X)
         //          \---> (C)
@@ -33,8 +32,8 @@ mod test {
 
     #[test]
     fn multiple_deletes() {
-        let document = Arc::new(Mutex::new(Document::new()));
-        let mut cursor = Cursor::new(document.clone(), document.lock().unwrap().root_node(), 0);
+        let document = Document::new();
+        let mut cursor = Cursor::root(&document);
 
         cursor.insert("A".to_string());
         cursor.insert("BX".to_string());

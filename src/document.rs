@@ -1,30 +1,41 @@
 use crate::cursor::Cursor;
 use crate::node::{Node, NodeId};
-use std::collections::{BTreeMap, VecDeque};
+use std::{
+    collections::BTreeMap,
+    sync::{Arc, Mutex},
+};
 
-pub struct Document {
-    pub nodes: BTreeMap<NodeId, Node>,
-    pub child_map: BTreeMap<NodeId, Vec<NodeId>>,
-    clock: u32,
-    root: NodeId,
-}
+#[derive(Clone)]
+pub struct Document(Arc<Mutex<DocumentInner>>);
 
 impl Document {
     pub fn new() -> Document {
         let root = Node::root(0);
         let node_id = root.node_id();
 
-        let mut me = Document {
+        let mut inner = DocumentInner {
             root: node_id,
             clock: 1,
             nodes: BTreeMap::new(),
             child_map: BTreeMap::new(),
         };
 
-        me.add_node(root);
+        inner.add_node(root);
 
-        me
+        Document(Arc::new(Mutex::new(inner)))
     }
+    pub fn inner(&self) -> std::sync::MutexGuard<DocumentInner> {
+        self.0.lock().unwrap()
+    }
+}
+pub struct DocumentInner {
+    pub nodes: BTreeMap<NodeId, Node>,
+    pub child_map: BTreeMap<NodeId, Vec<NodeId>>,
+    clock: u32,
+    root: NodeId,
+}
+
+impl DocumentInner {
     pub fn root_node(&self) -> NodeId {
         self.root.clone()
     }
@@ -72,7 +83,6 @@ impl Document {
                 None => return (node_id.clone(), 0),
             }
         }
-        return (node_id.clone(), 0);
     }
     pub fn add_node(&mut self, node: Node) {
         let node_id = node.node_id();
