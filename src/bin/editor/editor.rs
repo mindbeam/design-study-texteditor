@@ -1,4 +1,7 @@
-use cursive::{Printer, Vec2, View};
+use cursive::{
+    event::{Event, EventResult, Key},
+    Printer, Vec2, View,
+};
 use keystroke_crdt_experiment::{cursor::Cursor, document::Document};
 
 pub struct Editor {
@@ -10,6 +13,10 @@ impl Editor {
         Editor {
             cursor: Cursor::root(document),
         }
+    }
+
+    fn insert(&mut self, ch: char) {
+        self.cursor.insert(ch.to_string());
     }
 }
 
@@ -35,6 +42,14 @@ impl View for Editor {
         Vec2::new(30, 30)
     }
     fn draw(&self, printer: &Printer) {
-        printer.print((0, 0), "Meow")
+        printer.print((0, 0), &self.cursor.project_region(100))
+    }
+    fn on_event(&mut self, event: Event) -> EventResult {
+        match event {
+            Event::Char(ch) => self.insert(ch),
+            Event::Key(Key::Backspace) => self.cursor.delete(),
+            _ => {}
+        };
+        EventResult::Consumed(None)
     }
 }
