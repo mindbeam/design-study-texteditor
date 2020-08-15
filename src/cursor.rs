@@ -64,6 +64,34 @@ impl Cursor {
         self.offset = updated.1;
     }
 
+    /// Project a string from the document, starting at the current cursor position
+    pub fn project_forward(&self, character_limit: Option<usize>) -> String {
+        // Todo make this an iterator
+
+        let mut buf = String::new();
+
+        self.scan_forward(|node_id, node, render_offset, children| {
+            node.project(&mut buf, render_offset);
+
+            if let Some(_) = children {
+                true
+            } else {
+                if let Some(limit) = character_limit {
+                    if buf.len() >= limit {
+                        buf.truncate(limit);
+                        false
+                    } else {
+                        true
+                    }
+                } else {
+                    true
+                }
+            }
+        });
+
+        buf
+    }
+
     // Look leftward by up to rewind_by_chars and then project the tree forward
     pub fn rewind_and_project(
         &self,
@@ -76,15 +104,16 @@ impl Cursor {
         rewind.project_forward(character_limit)
     }
 
-    /// Project a string from the document, starting at the current cursor position
-    pub fn project_forward(&self, character_limit: Option<usize>) -> String {
+    pub fn scan_forward<F>(&self, mut f: F)
+    where
+        F: FnMut(&NodeId, &Node, usize, Option<&Vec<NodeId>>) -> bool,
+    {
         // Todo make this an iterator
         struct Hop {
             node_id: NodeId,
             node: Node,
             render_offset: usize,
         }
-        let mut buf = String::new();
 
         let mut hopper: Vec<Hop> = Vec::new();
 
@@ -104,10 +133,13 @@ impl Cursor {
         while let Some(hop) = hopper.pop() {
             let node = doc.nodes.get(&hop.node_id).expect("Node not found");
 
-            node.project(&mut buf, hop.render_offset);
+            let children = doc.child_map.get(&hop.node_id);
+            if !f(&hop.node_id, node, hop.render_offset, children) {
+                return;
+            }
 
             let mut subhopper = Vec::new();
-            if let Some(children) = doc.child_map.get(&hop.node_id) {
+            if let Some(children) = children {
                 for child_id in children {
                     let child = doc.nodes.get(&child_id).expect("Node not found").clone();
 
@@ -126,7 +158,5 @@ impl Cursor {
 
             hopper.extend(subhopper);
         }
-
-        buf
     }
 }

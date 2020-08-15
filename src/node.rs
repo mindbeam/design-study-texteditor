@@ -113,12 +113,18 @@ impl Node {
 
         NodeId(result)
     }
+    pub fn find(&self, c: char) -> Option<usize> {
+        match &self.action {
+            Action::Insert { offset, body } => body.find(c),
+            _ => None,
+        }
+    }
     pub fn project(&self, buf: &mut String, render_offset: usize) {
         match &self.action {
-            crate::node::Action::Null => {
+            Action::Null => {
                 //println!("{}: root", self.node_id().hex4())
             }
-            crate::node::Action::Insert { offset, body } => {
+            Action::Insert { offset, body } => {
                 // println!(
                 //     "{}: insert({}~>{} of {}, {}) ({})",
                 //     self.node_id().hex4(),
@@ -132,7 +138,7 @@ impl Node {
                 // TODO calculate render offset here
                 buf.insert_str(render_offset as usize, &body);
             }
-            crate::node::Action::Delete { offset } => {
+            Action::Delete { offset } => {
                 // println!(
                 //     "{}: delete({}~>{}) ({})",
                 //     self.node_id().hex4(),

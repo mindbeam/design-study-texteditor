@@ -48,6 +48,30 @@ impl Iterator for RowIterator {
     fn next(&mut self) -> Option<Self::Item> {
         // let buf = self.cursor.scan_forward(Some(self.max_width));
 
+        let mut last_node_id = self.cursor.node_id.clone();
+        let mut buf = String::new();
+
+        // self.cursor
+        //     .scan_forward(|node_id, node, render_offset, children| {
+        //         node.project(&mut buf, render_offset);
+
+        //         last_node_id = node_id.clone();
+        //         // if we have children, they might be deletions, so we have to keep going
+        //         if let Some(_) = children {
+        //             return true;
+        //         }
+
+        //         if let Some(offset) = node.find("\n") {
+        //             // TODO - determine if there are any deletions before this character
+        //         }
+        //         if buf.len() >= limit {
+        //             buf.truncate(limit);
+        //             false
+        //         } else {
+        //             true
+        //         }
+        //     });
+
         unimplemented!()
 
         // Row {
