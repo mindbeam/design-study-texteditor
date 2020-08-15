@@ -19,8 +19,9 @@ impl EditorWindow {
 
         // The main dialog will just have a textarea.
         // Its size expand automatically with the content.
+        // LinearLayout::horizontal().
 
-        let editor = Editor::new(&self.document).fixed_width(30);
+        let editor = Editor::new(&self.document).full_screen();
 
         siv.add_layer(editor);
 

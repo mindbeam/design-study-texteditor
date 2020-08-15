@@ -2,12 +2,13 @@ use crate::{
     document::{Document, DocumentInner},
     node::{Node, NodeId},
 };
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct Cursor {
     pub document: Document,
     pub node_id: NodeId,
-    pub offset: u32,
+    pub offset: usize,
 }
 
 impl Cursor {
@@ -22,7 +23,7 @@ impl Cursor {
         self.document.inner()
     }
     pub fn insert(&mut self, body: String) {
-        let offset = body.len() as u32;
+        let offset = body.len();
 
         let node = Node::insert(&self, body);
         let node_id = node.node_id();
@@ -44,7 +45,7 @@ impl Cursor {
     /// Note that the cursor itself may have an offset to the referenced node
     /// Which is conceptually similar to the cursor itself being like a node
     // referencing a parent node
-    pub fn left(&mut self, mut positions: u32) {
+    pub fn left(&mut self, mut positions: usize) {
         // first, lets see if we can do this without changing nodes
         if positions < self.offset {
             // We don't want to go to zero
@@ -63,34 +64,39 @@ impl Cursor {
         self.offset = updated.1;
     }
 
-    // Project a number of characters before and after
-    pub fn project_region(&self, chars_before_and_after: u32) -> String {
-        // TODO - make nodes BTreeMap<NodeId,Vec<NodeUnit>>
-        // NO! Do it from child to parent after all
-        // this will allow scrolling to render a partial document. start with the cursor
+    // Look leftward by up to rewind_by_chars and then project the tree forward
+    pub fn rewind_and_project(
+        &self,
+        rewind_by_chars: usize,
+        character_limit: Option<usize>,
+    ) -> String {
+        let mut rewind = self.clone();
+        rewind.left(rewind_by_chars);
 
-        let mut buf = String::new();
+        rewind.project_forward(character_limit)
+    }
 
+    /// Project a string from the document, starting at the current cursor position
+    pub fn project_forward(&self, character_limit: Option<usize>) -> String {
+        // Todo make this an iterator
         struct Hop {
             node_id: NodeId,
             node: Node,
-            render_offset: u32,
+            render_offset: usize,
         }
+        let mut buf = String::new();
 
         let mut hopper: Vec<Hop> = Vec::new();
-
-        let mut left = self.clone();
-        left.left(chars_before_and_after);
 
         let doc = self.doc();
         let node = doc
             .nodes
-            .get(&left.node_id)
+            .get(&self.node_id)
             .expect("Node not found")
             .clone();
 
         hopper.push(Hop {
-            node_id: left.node_id.clone(),
+            node_id: self.node_id.clone(),
             node,
             render_offset: 0,
         });

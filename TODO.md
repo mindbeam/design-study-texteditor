@@ -4,7 +4,9 @@ TODOs:
 - X leftward pre-traversal regional projection
 - X Basic node Ordering
 - X document TreeView
+- Fully functional cursive UI
 - data persistence (sled)
+- Tree view
 - regional traversal by line
 - left-right on-demand regional traversal
 - Move basic storage/traversal guts to a storage class, and make document and entity type

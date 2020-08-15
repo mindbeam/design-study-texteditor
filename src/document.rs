@@ -53,9 +53,9 @@ impl DocumentInner {
     pub fn traverse_left(
         &self,
         mut node_id: NodeId,
-        mut positions: u32,
+        mut positions: usize,
         try_avoid_zero: bool,
-    ) -> (NodeId, u32) {
+    ) -> (NodeId, usize) {
         //
         loop {
             let node = self.nodes.get(&node_id).expect("Node not found");

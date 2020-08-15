@@ -6,12 +6,12 @@ use sha2::{Digest, Sha512Trunc256};
 pub enum Action {
     Null,
     Insert {
-        offset: u32,
+        offset: usize,
         body: String,
     },
     #[allow(unused)]
     Delete {
-        offset: u32,
+        offset: usize,
     },
 }
 
@@ -90,7 +90,7 @@ impl Node {
             Action::Delete { offset } => format!("␡ @ {}", offset),
         }
     }
-    pub fn offset(&self) -> u32 {
+    pub fn offset(&self) -> usize {
         use crate::node::Action::*;
         match &self.action {
             Null => 0,
@@ -113,7 +113,7 @@ impl Node {
 
         NodeId(result)
     }
-    pub fn project(&self, buf: &mut String, render_offset: u32) {
+    pub fn project(&self, buf: &mut String, render_offset: usize) {
         match &self.action {
             crate::node::Action::Null => {
                 //println!("{}: root", self.node_id().hex4())

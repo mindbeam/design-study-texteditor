@@ -26,7 +26,7 @@ mod test {
 
         println!("{}", cursor.doc().diag_tree(Some(&cursor)));
 
-        let proj = cursor.project_region(100);
+        let proj = cursor.rewind_and_project(100, None);
         assert_eq!("ABC", proj);
     }
 

@@ -2,6 +2,7 @@ use keystroke_crdt_experiment::{cursor::Cursor, document::Document};
 
 mod editor;
 mod editor_window;
+mod util;
 use editor_window::EditorWindow;
 use std::sync::{Arc, Mutex};
 
