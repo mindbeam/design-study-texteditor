@@ -1,6 +1,7 @@
 use crate::{
     document::{Document, DocumentInner},
     node::{Node, NodeId},
+    util::mutstr::MutStr,
 };
 use std::sync::{Arc, Mutex};
 
@@ -65,28 +66,32 @@ impl Cursor {
     }
 
     /// Project a string from the document, starting at the current cursor position
-    pub fn project_forward(&self, character_limit: Option<usize>) -> String {
+    pub fn project_forward(&self, mut character_limit: Option<usize>) -> String {
         // Todo make this an iterator
 
         let mut buf = String::new();
 
-        self.scan_forward(|node_id, node, render_offset, children| {
-            node.project(&mut buf, render_offset);
+        self.scan_forward(|_node_id, node, render_offset, children| {
+            // println!("{:?}", character_limit);
 
-            if let Some(_) = children {
-                true
-            } else {
-                if let Some(limit) = character_limit {
-                    if buf.len() >= limit {
-                        buf.truncate(limit);
-                        false
-                    } else {
-                        true
-                    }
+            let mut slice = MutStr::slice(&mut buf, render_offset..);
+            let len = node.project(&mut slice, character_limit);
+
+            if let Some(limit) = character_limit.as_mut() {
+                if len >= 0 {
+                    *limit -= len as usize;
                 } else {
-                    true
+                    *limit += len as usize;
                 }
+
+                // *limit > 0
+                // } else {
+                // true
             }
+
+            // if let Some(_) = children {
+            //     true
+            // }
         });
 
         buf
@@ -106,13 +111,13 @@ impl Cursor {
 
     pub fn scan_forward<F>(&self, mut f: F)
     where
-        F: FnMut(&NodeId, &Node, usize, Option<&Vec<NodeId>>) -> bool,
+        F: FnMut(&NodeId, &Node, usize, Option<&Vec<NodeId>>),
     {
         // Todo make this an iterator
         struct Hop {
             node_id: NodeId,
             node: Node,
-            render_offset: usize,
+            parent_offset: usize,
         }
 
         let mut hopper: Vec<Hop> = Vec::new();
@@ -127,28 +132,25 @@ impl Cursor {
         hopper.push(Hop {
             node_id: self.node_id.clone(),
             node,
-            render_offset: 0,
+            parent_offset: 0,
         });
 
         while let Some(hop) = hopper.pop() {
             let node = doc.nodes.get(&hop.node_id).expect("Node not found");
 
             let children = doc.child_map.get(&hop.node_id);
-            if !f(&hop.node_id, node, hop.render_offset, children) {
-                return;
-            }
+            f(&hop.node_id, node, hop.parent_offset, children);
+            let parent_offset = hop.parent_offset + node.offset();
 
             let mut subhopper = Vec::new();
             if let Some(children) = children {
                 for child_id in children {
                     let child = doc.nodes.get(&child_id).expect("Node not found").clone();
 
-                    let render_offset = hop.render_offset + child.offset();
-
                     subhopper.push(Hop {
                         node_id: child_id.clone(),
                         node: child,
-                        render_offset,
+                        parent_offset,
                     })
                 }
             }

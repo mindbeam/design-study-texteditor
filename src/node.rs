@@ -1,6 +1,7 @@
-use crate::{cursor::Cursor, document::Document};
+use crate::{cursor::Cursor, document::Document, util::mutstr::MutStr};
 use serde::Serialize;
 use sha2::{Digest, Sha512Trunc256};
+use tracing::trace;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum Action {
@@ -119,38 +120,41 @@ impl Node {
             _ => None,
         }
     }
-    pub fn project(&self, buf: &mut String, render_offset: usize) {
+    pub fn project(&self, buf: &mut MutStr, limit: Option<usize>) -> isize {
         match &self.action {
             Action::Null => {
-                //println!("{}: root", self.node_id().hex4())
+                trace!("{}: root", self.node_id().hex4());
+                0
             }
             Action::Insert { offset, body } => {
-                // println!(
-                //     "{}: insert({}~>{} of {}, {}) ({})",
-                //     self.node_id().hex4(),
-                //     offset,
-                //     render_offset,
-                //     buf.len(),
-                //     body,
-                //     self.parent_hex4()
-                // );
+                trace!(
+                    "{}: insert({} of {}, {}) ({})",
+                    self.node_id().hex4(),
+                    offset,
+                    buf.len(),
+                    body,
+                    self.parent_hex4()
+                );
+
+                let slice = match limit {
+                    Some(limit) => &body[0..body.len().min(limit)],
+                    None => &body[..],
+                };
 
                 // TODO calculate render offset here
-                buf.insert_str(render_offset as usize, &body);
+                buf.insert_str(*offset, &slice);
+                slice.len() as isize
             }
             Action::Delete { offset } => {
-                // println!(
-                //     "{}: delete({}~>{}) ({})",
-                //     self.node_id().hex4(),
-                //     offset,
-                //     render_offset,
-                //     self.parent_hex4()
-                // );
-                if buf.len() == render_offset as usize {
-                    buf.pop();
-                } else {
-                    buf.remove(render_offset as usize);
-                }
+                trace!(
+                    "{}: delete({}) ({})",
+                    self.node_id().hex4(),
+                    offset,
+                    self.parent_hex4()
+                );
+                buf.remove(*offset);
+
+                -1
             }
         }
     }

@@ -1,6 +1,7 @@
 pub mod cursor;
 pub mod document;
 pub mod node;
+pub mod util;
 
 #[cfg(test)]
 mod test {
