@@ -17,13 +17,14 @@ At its conclusion, this should loosely resemble a traditional implementation of 
 
 - Consider how we might potentially refer to subgraphs in a sufficiently versatile fashion as to be robust against pre/post compation
 - Consider how we might commutatively merge multi-partite concurrencies such that the same outcome is achieved.
+
+```
   (A + B) + C
   =
   (B + C) + A
   =
   (C + A) + B
-
-  (See )
+```
 
 - Consider how we might detect perform the above idempotently, such that neither A, nor B, nor C is applied more than once, and that this may be calculated without A, B, and C having to be resident on the same host (This is essential for the scaling properties of Unbase)
 
@@ -34,4 +35,3 @@ At its conclusion, this should loosely resemble a traditional implementation of 
 - https://github.com/BonsaiDen/cursive_tree_view
   Consider using this for tree vis
 - https://en.wikipedia.org/wiki/Operational_transformation
--
