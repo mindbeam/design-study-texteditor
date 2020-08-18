@@ -3,11 +3,15 @@ use crate::{
     node::{Node, NodeId},
     util::mutstr::MutStr,
 };
-use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct Cursor {
     pub document: Document,
+    pub node_id: NodeId,
+    pub offset: usize,
+}
+
+pub struct NodeCursor {
     pub node_id: NodeId,
     pub offset: usize,
 }
@@ -67,11 +71,9 @@ impl Cursor {
 
     /// Project a string from the document, starting at the current cursor position
     pub fn project_forward(&self, mut character_limit: Option<usize>) -> String {
-        // Todo make this an iterator
-
         let mut buf = String::new();
 
-        self.scan_forward(|_node_id, node, render_offset, children| {
+        self.depth_first_scan(|_node_id, node, render_offset, children| {
             // println!("{:?}", character_limit);
 
             let mut slice = MutStr::slice(&mut buf, render_offset..);
@@ -109,11 +111,27 @@ impl Cursor {
         rewind.project_forward(character_limit)
     }
 
-    pub fn scan_forward<F>(&self, mut f: F)
+    pub fn depth_first_scan<F>(&self, mut f: F)
     where
         F: FnMut(&NodeId, &Node, usize, Option<&Vec<NodeId>>),
     {
-        // Todo make this an iterator
+        // Scan through the node tree, in a depth-first fashion.
+        // We are trying to avoid stack-based recursion, as we may be processing millions of nodes
+        //
+        // Rules:
+        // 0. All non-concurrent edits are:
+        //    * children of their preceeding edit node
+        //    * causally descendant of same (And of prior observed concurrencies?)
+        //    * temporally descendant according to the logical clock
+        // 1. Each child node may only "edit" its direct parent (within its range, as modified by preceding operations)
+        //     * The parent offset may shift, which should be harmless
+        //     * The problem is that parent length may also shift, which is NOT harmless
+        // 2. Children must always be causally descendant of their parent (and thus posess a later clock reading)
+        // 3. Each child node may only edit within the range of its direct parent (as modified by)
+
+        // QUESTIONS:
+        // 1. How do we contend with transformation of concurrently applied (sibling) operations?
+
         struct Hop {
             node_id: NodeId,
             node: Node,
@@ -162,3 +180,93 @@ impl Cursor {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use crate::{cursor::Cursor, document::Document};
+
+    #[test]
+    fn limit() {
+        crate::util::logging::init_logging();
+        let document = Document::new();
+        let mut cursor = Cursor::root(&document);
+
+        cursor.insert("ABC".to_string());
+        cursor.insert("DEF".to_string());
+        cursor.delete();
+        cursor.insert("GHI".to_string());
+
+        let proj = cursor.rewind_and_project(100, Some(4));
+        assert_eq!("ABCD", proj);
+
+        // println!("{}", cursor.doc().diag_tree(Some(&cursor)));
+
+        let proj = cursor.rewind_and_project(100, Some(6));
+        assert_eq!("ABCDEG", proj);
+    }
+
+    #[test]
+    fn limit_2() {
+        crate::util::logging::init_logging();
+        let document = Document::new();
+        let mut cursor = Cursor::root(&document);
+
+        cursor.insert("ABC".to_string());
+        cursor.insert("DEF".to_string());
+        cursor.delete();
+        cursor.delete();
+        cursor.delete();
+        cursor.delete();
+        cursor.insert("GHI".to_string());
+
+        let proj = cursor.rewind_and_project(100, Some(3));
+        assert_eq!("ABG", proj);
+    }
+
+    // #[test]
+    fn incremental_scan() {
+        let document = Document::new();
+        let mut cursor = Cursor::root(&document);
+
+        // (A) -> (BX) -> (delete X)
+        //          \---> (C)
+        cursor.insert("ABC".to_string());
+        cursor.insert("DEF".to_string());
+        cursor.delete();
+        cursor.insert("GHI".to_string());
+
+        // println!("{}", cursor.doc().diag_tree(Some(&cursor)));
+
+        let cursor = Cursor::root(&document);
+
+        // let mut out = Vec::new();
+        let mut count = 0;
+
+        cursor.depth_first_scan(|node_id, node, render_offset, children| {
+            // println!("{}, {}: {}", node_id.hex4(), render_offset, node.diag());
+
+            // In keeping with the stupidest-way doctrine, lets scan through the children here.
+            // The question is: Do we do this ourselves? or do we
+
+            // true
+            // match children {
+            //     Some(children) => {}
+            //     None => {}
+            // }
+            // unimplemented!()
+        });
+
+        // assert_eq!("ABC", proj);
+    }
+}
+
+// Only immediate child nodes may insert or delete into a node
+// Grandchild nodes may only modify those modifications
+
+// So what can we do to apply child nodes incrementally?
+// It's really about the clock. In order to achive this, we need to look at the maximum clock reading, indexed by minimum offset
+// And then play forward the operations in clock order until the minimum reading is cleared
+
+// Of course the simplest thing to do is to just play all child nodes recursively, but given that we're starting at the root,
+// that's essentially the same as projecting the full document.

@@ -19,7 +19,7 @@ fn repeated_child_node() {
     cursor.insert("b".to_string());
 
     // println!("{}", cursor.doc().diag());
-    println!("{}", cursor.doc().diag_tree(Some(&cursor)));
+    // println!("{}", cursor.doc().diag_tree(Some(&cursor)));
 
     let s = cursor.rewind_and_project(100, None);
     assert_eq!("ab", s);
@@ -40,7 +40,7 @@ fn marpy() {
     cursor.left(1);
     cursor.insert("m".to_string());
 
-    println!("{}", cursor.doc().diag_tree(Some(&cursor)));
+    // println!("{}", cursor.doc().diag_tree(Some(&cursor)));
     assert_eq!(
         "Mary had a little lamb",
         cursor.rewind_and_project(100, None)

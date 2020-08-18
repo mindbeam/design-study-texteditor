@@ -25,7 +25,7 @@ mod test {
         //     "ⓧ (cf30=NULL), cf30↜(b50d=A @ 0), b50d↜(3f9d=BX @ 1), 3f9d↜(c799=␡ @ 2), 3f9d↜(dc27=C @ 1)"
         // );
 
-        println!("{}", cursor.doc().diag_tree(Some(&cursor)));
+        // println!("{}", cursor.doc().diag_tree(Some(&cursor)));
 
         let proj = cursor.rewind_and_project(100, None);
         assert_eq!("ABC", proj);

@@ -24,7 +24,6 @@ pub struct Row {
 pub fn make_rows(cursor: Cursor, width: usize) -> Vec<Row> {
     // We can't make rows with width=0, so force at least width=1.
     let width = usize::max(width, 1);
-    // LinesIterator::new(text, width).show_spaces().collect()
     unimplemented!()
 }
 

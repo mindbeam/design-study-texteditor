@@ -4,7 +4,6 @@ mod editor;
 mod editor_window;
 mod util;
 use editor_window::EditorWindow;
-use std::sync::{Arc, Mutex};
 
 use std::{fs::File, io::BufRead, io::BufReader, path::PathBuf};
 use structopt::StructOpt;
