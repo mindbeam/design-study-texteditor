@@ -19,7 +19,8 @@ pub struct Editor {
 impl Editor {
     pub fn new(document: &Document) -> Self {
         let page_cursor = Cursor::root(document);
-        let edit_cursor = page_cursor.clone();
+        let mut edit_cursor = page_cursor.clone();
+        edit_cursor.offset = 2;
 
         Editor {
             page_cursor,
@@ -66,12 +67,21 @@ impl View for Editor {
         self.compute_rows(size);
     }
     fn draw(&self, printer: &Printer) {
-        // printer.print((0, 0), &self.cursor.project_region(100))
+        printer.print(
+            (0, 0),
+            &self.page_cursor.project_forward(Some(self.last_size.x)),
+        )
+
+        // TODO line wrapping
+        // TODO scrolling
+        // TODO presence indication (cursor location)
     }
     fn on_event(&mut self, event: Event) -> EventResult {
         match event {
             Event::Char(ch) => self.insert(ch),
             Event::Key(Key::Backspace) => self.edit_cursor.delete(),
+            Event::Key(Key::Left) => self.edit_cursor.left(1),
+            Event::Key(Key::Right) => self.edit_cursor.right(1),
             _ => {}
         };
         EventResult::Consumed(None)

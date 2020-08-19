@@ -84,6 +84,44 @@ impl DocumentInner {
             }
         }
     }
+    /// Traverse right a given number of positions from the zero offset of a given node
+    pub fn traverse_right(
+        &self,
+        mut node_id: NodeId,
+        mut positions: usize,
+        try_avoid_zero: bool,
+    ) -> (NodeId, usize) {
+        //
+        unimplemented!()
+        // TODO - determine how to project potential deletions such that we skip over them
+
+        // loop {
+        //     let node = self.nodes.get(&node_id).expect("Node not found");
+        //     match &node.parent {
+        //         Some(parent_id) => {
+        //             let offset = node.offset();
+
+        //             if try_avoid_zero && (offset > positions) || offset >= positions {
+        //                 // This node has a parent offset which is greater than the
+        //                 // number of positions we're being asked to traverse left
+        //                 // Return this node, and the adjusted parent offset
+        //                 return (parent_id.clone(), offset - positions);
+        //             } else {
+        //                 // if we got here, then this node did not have a sufficient parent
+        //                 // offset to deduct the requested positions, OR it got to zero,
+        //                 // but we're avoiding selecting offset zero to any node.
+        //                 // We know offset is NOT > positions, but MAY or may not be equal
+        //                 // the the above
+        //                 positions -= offset;
+        //                 node_id = parent_id.clone();
+
+        //                 continue;
+        //             }
+        //         }
+        //         None => return (node_id.clone(), 0),
+        //     }
+        // }
+    }
     pub fn add_node(&mut self, node: Node) {
         let node_id = node.node_id();
 

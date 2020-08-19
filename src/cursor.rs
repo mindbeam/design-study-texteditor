@@ -69,6 +69,19 @@ impl Cursor {
         self.offset = updated.1;
     }
 
+    /// Move the cursor N positions to the right within the document
+    /// Note that the cursor itself may have an offset to the referenced node
+    /// Which is conceptually similar to the cursor itself being like a node
+    // referencing a parent node
+    pub fn right(&mut self, positions: usize) {
+        let updated =
+            self.doc()
+                .traverse_right(self.node_id.clone(), self.offset + positions, true);
+
+        self.node_id = updated.0;
+        self.offset = updated.1;
+    }
+
     /// Project a string from the document, starting at the current cursor position
     pub fn project_forward(&self, mut character_limit: Option<usize>) -> String {
         let mut buf = String::new();
