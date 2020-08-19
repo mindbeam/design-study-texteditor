@@ -77,25 +77,24 @@ impl Cursor {
             // println!("{:?}", character_limit);
 
             let mut slice = MutStr::slice(&mut buf, render_offset..);
-            let len = node.project(&mut slice, character_limit);
+
+            // Overriding the character limit here as a hack fix. See PROJECTION_PROBLEM.md
+            let len = node.project(&mut slice, None /* character_limit */);
 
             if let Some(limit) = character_limit.as_mut() {
                 if len >= 0 {
-                    *limit -= len as usize;
+                    // Hack: had to use saturating subtraction, as we are forced to keep going after the limit of characters is reached
+                    limit.saturating_sub(len as usize) as usize;
                 } else {
-                    *limit += len as usize;
+                    println!("MEOW: {}", len);
+                    limit.checked_add((0 - len) as usize).unwrap();
                 }
-
-                // *limit > 0
-                // } else {
-                // true
             }
-
-            // if let Some(_) = children {
-            //     true
-            // }
         });
 
+        if let Some(limit) = character_limit {
+            buf.truncate(limit);
+        }
         buf
     }
 
@@ -208,7 +207,7 @@ mod test {
 
     #[test]
     fn limit_2() {
-        crate::util::logging::init_logging();
+        // crate::util::logging::init_logging();
         let document = Document::new();
         let mut cursor = Cursor::root(&document);
 

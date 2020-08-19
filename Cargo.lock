@@ -243,6 +243,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "design-study-texteditor"
+version = "0.1.0"
+dependencies = [
+ "cursive",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "structopt",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "digest"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -356,21 +371,6 @@ name = "itoa"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc6f3ad7b9d11a0c00842ff8de1b60ee58661048eb8049ed33c73594f359d7e6"
-
-[[package]]
-name = "keystroke-crdt-experiment"
-version = "0.1.0"
-dependencies = [
- "cursive",
- "hex",
- "serde",
- "serde_json",
- "sha2",
- "structopt",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
-]
 
 [[package]]
 name = "lazy_static"
