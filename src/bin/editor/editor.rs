@@ -5,7 +5,7 @@ use cursive::{
     event::{Event, EventResult, Key},
     Printer, Vec2, View,
 };
-use keystroke_crdt_experiment::{cursor::Cursor, document::Document};
+use design_study_texteditor::{cursor::Cursor, document::Document};
 
 pub struct Editor {
     page_cursor: Cursor,

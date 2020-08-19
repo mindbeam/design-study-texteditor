@@ -1,4 +1,4 @@
-use keystroke_crdt_experiment::{cursor::Cursor, document::Document};
+use design_study_texteditor::{cursor::Cursor, document::Document};
 
 mod editor;
 mod editor_window;
@@ -24,7 +24,7 @@ fn main() {
 
     match opt.file {
         Some(path) => {
-            keystroke_crdt_experiment::util::logging::init_logging();
+            design_study_texteditor::util::logging::init_logging();
             openfile(path);
         }
         None => {}

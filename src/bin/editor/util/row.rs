@@ -1,4 +1,4 @@
-use keystroke_crdt_experiment::{cursor::Cursor, node::NodeId};
+use design_study_texteditor::{cursor::Cursor, node::NodeId};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Row {

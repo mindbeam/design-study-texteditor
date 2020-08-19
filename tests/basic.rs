@@ -1,4 +1,4 @@
-use keystroke_crdt_experiment::{cursor::Cursor, document::Document};
+use design_study_texteditor::{cursor::Cursor, document::Document};
 use std::sync::{Arc, Mutex};
 
 /// Each child node should be unique based on parent, clock, and content

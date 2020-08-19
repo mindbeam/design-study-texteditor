@@ -2,7 +2,7 @@ use cursive::event::{Event, Key};
 use cursive::traits::*;
 use cursive::views::{Dialog, EditView, OnEventView, TextArea};
 use cursive::Cursive;
-use keystroke_crdt_experiment::document::Document;
+use design_study_texteditor::document::Document;
 
 use crate::editor::Editor;
 
